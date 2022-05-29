@@ -1,0 +1,11 @@
+This directory content example (for EN-US with QWERTY layout):
+lessons
+├── course
+│   └── qwerty
+│       └── 1.txt
+├── texts
+│   └── en-US
+│       └── 1.txt
+└── words
+    └── en-US.txt
+

@@ -3,23 +3,34 @@ import sys
 
 from PyQt6 import uic
 from PyQt6.QtWidgets import QApplication, QMainWindow
+from PyQt6.QtGui import QFontDatabase
 
-from src.connections import Connections
-import typing
-from typing_window import TypingWindow
 from src.mode import Mode
+from typing_window import TypingWindow
 
 # Сhange working directory
 cur_dir = os.path.dirname(__file__)
 os.chdir(cur_dir)
 
 
+def load_fonts():
+    for file in os.listdir("src/fonts"):
+        if os.path.isfile(f"src/fonts/{file}"):
+            print(f"Trying to load font: {file}")
+            try:
+                with open(f"src/fonts/{file}", mode="rb") as f:
+                    QFontDatabase.addApplicationFontFromData(f.read())
+            except Exception:
+                ...
+
+
 class MyWidget(QMainWindow):
     def __init__(self):
         super().__init__()
         uic.loadUi("src/design/home.ui", self)
-        # Connections
-        self.connect()
+        self.mode = None
+        self.connect()  # Connections
+        load_fonts()
 
     def connect(self):
         self.course_btn.clicked.connect(self.start_course)

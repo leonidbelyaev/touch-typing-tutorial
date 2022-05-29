@@ -58,7 +58,7 @@
          <widget class="QComboBox" name="language_box">
           <item>
            <property name="text">
-            <string>English</string>
+            <string>en-US</string>
            </property>
           </item>
          </widget>
