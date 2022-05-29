@@ -1,7 +1,12 @@
+import os
 import sys
 
 from PyQt6 import uic
 from PyQt6.QtWidgets import QApplication, QMainWindow
+
+# Сhange working directory
+cur_dir = os.path.dirname(__file__)
+os.chdir(cur_dir)
 
 
 class MyWidget(QMainWindow):
