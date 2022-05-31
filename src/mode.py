@@ -1,4 +1,4 @@
-from .index import INDEX, MODES
+from src.index import INDEX, MODES
 
 # Mode types: course, random,  words, texts
 class Mode:
@@ -12,6 +12,3 @@ class Mode:
             self.language = language
         else:
             raise ValueError("Incorrect layout or language")
-
-    def generate_excercise(self, lesson=1):
-        ...

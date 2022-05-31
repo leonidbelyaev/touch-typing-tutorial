@@ -1,4 +1,5 @@
 import sys
+import random
 
 from PyQt6 import uic
 from PyQt6.QtWidgets import QDialog
@@ -21,11 +22,23 @@ def load_lesson_text(i, mode):
     elif mode.type == "texts":
         filename += f"texts/{mode.language}/{i}.txt"
     try:
-        print("Loading " + filename)
+        print("Loading lesson: " + filename)
         with open(filename, encoding="utf-8", mode="r") as f:
-            return f.read()
+            return f.read().strip()
     except FileNotFoundError:
         return None
+
+
+def get_ways(ls: list) -> list:
+    ways = []
+    if len(ls) == 1:
+        return ls[0]
+    for i in ls:
+        ls2 = ls.copy()
+        del ls2[ls2.index(i)]
+        for way in get_ways(ls2):
+            ways.append([i, *way])
+    return ways
 
 
 class TypingWindow(QDialog):
@@ -55,8 +68,13 @@ class TypingWindow(QDialog):
         self.update_lesson()
 
     def process_typing(self):
-        new_char = self.input_box.text()[-1]
-        i = len(self.progress) + 1
+        try:
+            new_char = self.input_box.text()[-1]
+            i = len(self.progress) + 1
+            if i >= len(self.lesson_text.document().toPlainText()):
+                raise IndexError()
+        except IndexError:
+            return
         if (
             self.lesson_text.document()
             .toPlainText()
@@ -66,6 +84,9 @@ class TypingWindow(QDialog):
             self.progress += new_char
             self.set_underline(i)
             self.set_underline(i - 1, False)
+        elif self.progress == self.lesson_text.document().toPlainText():
+            self.set_underline(i, False)
+            self.lesson_box.setValue(self.lesson_box.value() + 1)
         else:
             self.set_underline(i - 1, fcolor1="red")
 
@@ -78,8 +99,11 @@ class TypingWindow(QDialog):
         fcolor2="green",
         bcolor2="transparent",
     ):
-        self.cursor.setPosition(i)
-        self.cursor.setPosition(i + 1, QTextCursor.MoveMode.KeepAnchor)
+        try:
+            self.cursor.setPosition(i)
+            self.cursor.setPosition(i + 1, QTextCursor.MoveMode.KeepAnchor)
+        except Exception:
+            return
         y = self.cursor.charFormat()
         if enable:
             y.setUnderlineStyle(QTextCharFormat.UnderlineStyle.SingleUnderline)
@@ -110,7 +134,24 @@ class TypingWindow(QDialog):
                 "Please, try another, or add it manually."
             )
             return
-        if self.mode.type in ["course", "texts"]:
+        if self.mode.type == "course":
+            if len(t) < 5:
+                t *= 2
+            w = get_ways(list(t))
+            if len(w) < 40:
+                w = (w * (40 // len(w)))[:41]
+            else:
+                w = w[:41]
+            self.lesson_text.setText(" ".join(["".join(i) for i in w]))
+        elif self.mode.type == "words":
+            t = t.split("\n")
+            w = [random.choice(t) for _ in range(40)]
+            self.lesson_text.setText(" ".join(w))
+        elif self.mode.type == "random":
+            t = "".join([random.choice(t + " ") for _ in range(100)])
             self.lesson_text.setText(t)
-        self.set_underline(0)
+        elif self.mode.type == "texts":
+            self.lesson_text.setText(t)
+        if self.lesson_text.document().toPlainText() != "" and t is not None:
+            self.set_underline(0)
         self.input_box.setFocus()

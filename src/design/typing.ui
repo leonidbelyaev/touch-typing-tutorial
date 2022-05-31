@@ -115,7 +115,11 @@
       </layout>
      </item>
      <item row="0" column="0">
-      <widget class="QTextEdit" name="lesson_text"/>
+      <widget class="QTextEdit" name="lesson_text">
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+      </widget>
      </item>
     </layout>
    </item>

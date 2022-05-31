@@ -7,6 +7,7 @@ from PyQt6.QtGui import QFontDatabase
 
 from src.mode import Mode
 from typing_window import TypingWindow
+from src.index import INDEX
 
 # Сhange working directory
 cur_dir = os.path.dirname(__file__)
@@ -16,7 +17,7 @@ os.chdir(cur_dir)
 def load_fonts():
     for file in os.listdir("src/fonts"):
         if os.path.isfile(f"src/fonts/{file}"):
-            print(f"Trying to load font: {file}")
+            print(f"Loading font: {file}")
             try:
                 with open(f"src/fonts/{file}", mode="rb") as f:
                     QFontDatabase.addApplicationFontFromData(f.read())
@@ -31,12 +32,19 @@ class MyWidget(QMainWindow):
         self.mode = None
         self.connect()  # Connections
         load_fonts()
+        self.load_options()
 
     def connect(self):
         self.course_btn.clicked.connect(self.start_course)
         self.random_btn.clicked.connect(self.start_random)
         self.words_btn.clicked.connect(self.start_words)
         self.texts_btn.clicked.connect(self.start_texts)
+
+    def load_options(self):
+        for lang in INDEX["languages"]:
+            self.language_box.addItem(lang)
+        for lay in INDEX["layouts"]:
+            self.layout_box.addItem(lay)
 
     def start_course(self):
         self.mode = Mode(

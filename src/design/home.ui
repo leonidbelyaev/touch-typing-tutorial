@@ -46,22 +46,10 @@
          </widget>
         </item>
         <item row="1" column="1">
-         <widget class="QComboBox" name="layout_box">
-          <item>
-           <property name="text">
-            <string>qwerty</string>
-           </property>
-          </item>
-         </widget>
+         <widget class="QComboBox" name="layout_box"/>
         </item>
         <item row="0" column="1">
-         <widget class="QComboBox" name="language_box">
-          <item>
-           <property name="text">
-            <string>en-US</string>
-           </property>
-          </item>
-         </widget>
+         <widget class="QComboBox" name="language_box"/>
         </item>
        </layout>
       </item>
