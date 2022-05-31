@@ -7,7 +7,7 @@ Touch Typing Tutorial is an app which helps you learn how to write fast without 
 - Real Texts (Practice writing on real texts to improve your speed even further)
 
 ### Settings
-This app supports any language and layout as long as the resources are added. By default it ships only with English (US) and QWERTY (as of version 0.9.  
+This app supports any language and layout as long as the resources are added. By default it ships only with English (US) and QWERTY (as of version 1.0.0)  
 
 ### Technical info
 This app uses PyQt6 and (will be) packed using pyinstaller. All the resources are in the _src_ directory, which contains:
@@ -16,4 +16,4 @@ This app uses PyQt6 and (will be) packed using pyinstaller. All the resources ar
 - _src/design_ — UI design files for Qt
 - _src/index.py_ — index of all supported files, (will be) loaded to the program
 - other _.py_ files — used internally, should not be edited unless required
-Requirements (will be) are stored in requirements.txt 
+Requirements are stored in requirements.txt 
