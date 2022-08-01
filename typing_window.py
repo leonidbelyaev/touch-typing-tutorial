@@ -1,11 +1,13 @@
-import sys
 import random
+import sys
+from typing import NoReturn
 
-from PyQt6 import uic
+from PyQt6.QtGui import QBrush, QColor, QFont
+from PyQt6.QtGui import QTextCharFormat as QTextCharFmt
+from PyQt6.QtGui import QTextCursor
 from PyQt6.QtWidgets import QDialog, QMessageBox
-from PyQt6.QtGui import QTextCursor, QTextCharFormat, QFont, QColor, QBrush
 
-
+from src.design.typing import Ui_Dialog
 from src.index import MODE_NAMES
 from src.mode import Mode
 
@@ -24,34 +26,34 @@ def load_lesson_text(i, mode: Mode) -> str | None:
         filename += f"texts/{mode.language}/{i}.txt"
     try:
         print("Loading lesson: " + filename)
-        with open(filename, encoding="utf-8", mode="r") as f:
-            return f.read().strip()
+        with open(filename, encoding="utf-8", mode="r") as file:
+            return file.read().strip()
     except FileNotFoundError:
         return None
 
 
-def get_ways(ls: list) -> list:
+def get_ways(lst: list) -> list:
     ways = []
-    if len(ls) == 1:
-        return ls[0]
-    for i in ls:
-        ls2 = ls.copy()
+    if len(lst) == 1:
+        return lst[0]
+    for i in lst:
+        ls2 = lst.copy()
         del ls2[ls2.index(i)]
         for way in get_ways(ls2):
             ways.append([i, *way])
     return ways
 
 
-class TypingWindow(QDialog):
+class TypingWindow(QDialog, Ui_Dialog):
     def __init__(self, mode: Mode) -> None:
         super().__init__()
-        uic.loadUi("src/design/typing.ui", self)  # type: ignore
+        self.setupUi(self)
         self.mode: Mode = mode
         self.setWindowTitle(f"{MODE_NAMES[mode.type]} — Touch Typing Tutorial")
         self.lesson_text.setFontFamily("Roboto Mono")
         self.lesson_text.setFontPointSize(16)
         self.progress: str = ""
-        self.cursor = self.lesson_text.textCursor()
+        self.cursor: QTextCursor = self.lesson_text.textCursor()
         # Connections
         self.back_to_menu_btn.clicked.connect(self.close)
         self.quit_btn.clicked.connect(self.exit)
@@ -87,8 +89,6 @@ class TypingWindow(QDialog):
         if (self.progress + new_char)[: len(text)] == text:
             self.set_underline(index, False)
             self.finished_lesson()
-            # TODO: move lesson incrementing to self.finished_lesson()
-            self.lesson_box.setValue(self.lesson_box.value() + 1)
         # If correctly typed the character
         elif not text.find(self.progress + new_char):
             self.progress += new_char
@@ -96,47 +96,68 @@ class TypingWindow(QDialog):
             self.set_underline(next_index)
         # If The character is incorrect
         else:
-            self.set_underline(index, fcolor1="red")
+            self.set_underline(index, True, True)
 
-    def finished_lesson(self) -> None:  # pylint: disable=no-self-use
-        # HACK: remove pylint disable
+    def finished_lesson(self) -> None:
         # TODO: Add typing stats (Issue #3)
         msg: QMessageBox = QMessageBox()
         msg.setWindowTitle("You finished the lesson.")
         msg.setText("You finished the lesson successfully.")
         msg.setInformativeText("Stats are not available in this version.")
-        msg.setStandardButtons(QMessageBox.StandardButton.Close)
+        msg.setStandardButtons(
+            QMessageBox.StandardButton.Retry | QMessageBox.StandardButton.Ok
+        )
+        msg.setDefaultButton(QMessageBox.StandardButton.Ok)
         msg.setIcon(QMessageBox.Icon.Information)
-        msg.exec()
+        if msg.exec() == QMessageBox.StandardButton.Ok:
+            self.lesson_box.setValue(self.lesson_box.value() + 1)
+        else:
+            self.lesson_box.setValue(self.lesson_box.value())
 
     def set_underline(
         self,
         i,
-        enable=True,
-        fcolor1="black",
-        bcolor1="yellow",
-        fcolor2="green",
-        bcolor2="transparent",
+        enable: bool = True,
+        error: bool = False,
+        colors: tuple[str, str] = tuple(),
     ) -> None:
-        try:
-            self.cursor.setPosition(i)
-            self.cursor.setPosition(i + 1, QTextCursor.MoveMode.KeepAnchor)
-        except Exception:
-            return
-        y = self.cursor.charFormat()
-        if enable:
-            y.setUnderlineStyle(QTextCharFormat.UnderlineStyle.SingleUnderline)
-            y.setFontWeight(QFont.Weight.Bold)
-            y.setForeground(QBrush(QColor(fcolor1)))
-            y.setBackground(QBrush(QColor(bcolor1)))
-        else:
-            y.setUnderlineStyle(QTextCharFormat.UnderlineStyle.NoUnderline)
-            y.setFontWeight(QFont.Weight.Normal)
-            y.setForeground(QBrush(QColor(fcolor2)))
-            y.setBackground(QBrush(QColor(bcolor2)))
-        self.cursor.setCharFormat(y)
+        # Handle colors
+        if not colors:
+            if enable and error:
+                colors = ("red", "yellow")
+            elif enable:
+                colors = ("black", "yellow")
+            elif not enable and not error:
+                colors = ("green", "transparent")
 
-    def exit(self):
+        # Check if text overflows
+        if i > len(self.lesson_text.toPlainText()):
+            return
+
+        self.cursor.setPosition(i)
+        self.cursor.movePosition(
+            QTextCursor.MoveOperation.NextCharacter,
+            QTextCursor.MoveMode.KeepAnchor,
+        )
+
+        fmt: QTextCharFmt = self.cursor.charFormat()
+
+        # Set colors
+        fmt.setForeground(QBrush(QColor(colors[0])))
+        fmt.setBackground(QBrush(QColor(colors[1])))
+
+        # Other styling
+        if enable:
+            fmt.setUnderlineStyle(QTextCharFmt.UnderlineStyle.SingleUnderline)
+            fmt.setFontWeight(QFont.Weight.Bold)
+        else:
+            fmt.setUnderlineStyle(QTextCharFmt.UnderlineStyle.NoUnderline)
+            fmt.setFontWeight(QFont.Weight.Normal)
+
+        # Apply
+        self.cursor.setCharFormat(fmt)
+
+    def exit(self) -> NoReturn:
         self.hide()
         sys.exit(0)
 
@@ -146,31 +167,36 @@ class TypingWindow(QDialog):
         self.load_lesson()
 
     def load_lesson(self) -> None:
-        t: str | None = load_lesson_text(self.lesson_box.text(), self.mode)
-        if t is None:
+        apply = self.lesson_text.setText  # setText() alias
+        mode: Mode = self.mode
+        lesson: str | None = load_lesson_text(self.lesson_box.text(), mode)
+        if lesson is None:
             self.lesson_text.setText(
                 "This lesson does not exist. "
                 "Please, try another, or add it manually."
             )
             return
-        if self.mode.type == "course":
-            if len(t) < 5:
-                t *= 2
-            w = get_ways(list(t))
-            if len(w) < 40:
-                w = (w * (40 // len(w)))[:41]
+        if mode.type == "course":
+            if len(lesson) < 5:
+                lesson *= 2
+            lst: list[str] = get_ways(list(lesson))
+            if len(lst) < 40:
+                lst: list[str] = (lst * (40 // len(lst)))[:41]
             else:
-                w = w[:41]
-            self.lesson_text.setText(" ".join(["".join(i) for i in w]))
-        elif self.mode.type == "words":
-            t = t.split("\n")
-            w = [random.choice(t) for _ in range(40)]
-            self.lesson_text.setText(" ".join(w))
-        elif self.mode.type == "random":
-            t = "".join([random.choice(t + " ") for _ in range(100)])
-            self.lesson_text.setText(t)
-        elif self.mode.type == "texts":
-            self.lesson_text.setText(t)
-        if self.lesson_text.document().toPlainText() != "" and t is not None:
+                lst: list[str] = lst[:41]
+            apply(" ".join(["".join(i) for i in lst]))
+        elif mode.type == "words":
+            lst: list[str] = [
+                random.choice(lesson.splitlines()) for _ in range(40)
+            ]
+            apply(" ".join(lst))
+        elif mode.type == "random":
+            apply("".join([random.choice(lesson + " ") for _ in range(100)]))
+        elif mode.type == "texts":
+            apply(lesson)
+        if (
+            self.lesson_text.document().toPlainText() != ""
+            and lesson is not None
+        ):
             self.set_underline(0)
         self.input_box.setFocus()

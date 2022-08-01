@@ -1,12 +1,11 @@
-from ctypes import sizeof
 import os
 import sys
 
-from PyQt6 import uic
 from PyQt6.QtCore import QByteArray
 from PyQt6.QtGui import QFontDatabase
 from PyQt6.QtWidgets import QApplication, QMainWindow
 
+from src.design.home import Ui_MainWindow
 from src.index import INDEX
 from src.mode import Mode
 from typing_window import TypingWindow
@@ -22,21 +21,21 @@ def load_fonts() -> None:
             print(f"Loading font: {file}")
             try:
                 byte_array: QByteArray = QByteArray()
-                with open(f"src/fonts/{file}", mode="rb") as f:
-                    byte_array.append(f.read())
+                with open(f"src/fonts/{file}", mode="rb") as file:
+                    byte_array.append(file.read())
                     QFontDatabase.addApplicationFontFromData(byte_array)
-            except Exception:
+            except IOError:
                 continue
 
 
-class MyWidget(QMainWindow):
+class MyWidget(QMainWindow, Ui_MainWindow):
     def __init__(self) -> None:
         super().__init__()
-        uic.loadUi("src/design/home.ui", self)
-        self.mode = None
-        self.connect()  # Connections
-        load_fonts()
+        self.setupUi(self)
         self.load_options()
+        self.connect()  # Connections
+
+        load_fonts()  # Keep at the end: might take a long time
 
     def connect(self) -> None:
         self.course_btn.clicked.connect(self.start_course)
@@ -51,40 +50,40 @@ class MyWidget(QMainWindow):
             self.layout_box.addItem(lay)
 
     def start_course(self) -> None:
-        self.mode: Mode = Mode(
+        mode: Mode = Mode(
             "course",
             language=self.language_box.currentText(),
             layout=self.layout_box.currentText(),
         )
-        self.start_typing()
+        self.start_typing(mode)
 
     def start_random(self) -> None:
-        self.mode = Mode(
+        mode: Mode = Mode(
             "random",
             language=self.language_box.currentText(),
             layout=self.layout_box.currentText(),
         )
-        self.start_typing()
+        self.start_typing(mode)
 
     def start_words(self) -> None:
-        self.mode = Mode(
+        mode: Mode = Mode(
             "words",
             language=self.language_box.currentText(),
             layout=self.layout_box.currentText(),
         )
-        self.start_typing()
+        self.start_typing(mode)
 
     def start_texts(self) -> None:
-        self.mode: Mode = Mode(
+        mode: Mode = Mode(
             "texts",
             language=self.language_box.currentText(),
             layout=self.layout_box.currentText(),
         )
-        self.start_typing()
+        self.start_typing(mode)
 
-    def start_typing(self) -> None:
+    def start_typing(self, mode: Mode) -> None:
         self.hide()
-        TypingWindow(self.mode).exec()
+        TypingWindow(mode).exec()
         self.show()
 
 
