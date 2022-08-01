@@ -2,17 +2,18 @@ import sys
 import random
 
 from PyQt6 import uic
-from PyQt6.QtWidgets import QDialog
+from PyQt6.QtWidgets import QDialog, QMessageBox
 from PyQt6.QtGui import QTextCursor, QTextCharFormat, QFont, QColor, QBrush
 
 
 from src.index import MODE_NAMES
+from src.mode import Mode
 
 # Adding Roboto Mono
 
 
-def load_lesson_text(i, mode):
-    filename = "src/lessons/"
+def load_lesson_text(i, mode: Mode) -> str | None:
+    filename: str = "src/lessons/"
     if mode.type == "course":
         filename += f"course/{mode.layout}/{i}.txt"
     elif mode.type == "random":
@@ -42,14 +43,14 @@ def get_ways(ls: list) -> list:
 
 
 class TypingWindow(QDialog):
-    def __init__(self, mode):
+    def __init__(self, mode: Mode) -> None:
         super().__init__()
-        uic.loadUi("src/design/typing.ui", self)
-        self.mode = mode
+        uic.loadUi("src/design/typing.ui", self)  # type: ignore
+        self.mode: Mode = mode
         self.setWindowTitle(f"{MODE_NAMES[mode.type]} — Touch Typing Tutorial")
         self.lesson_text.setFontFamily("Roboto Mono")
         self.lesson_text.setFontPointSize(16)
-        self.progress = ""
+        self.progress: str = ""
         self.cursor = self.lesson_text.textCursor()
         # Connections
         self.back_to_menu_btn.clicked.connect(self.close)
@@ -61,34 +62,52 @@ class TypingWindow(QDialog):
         # Start Typing
         self.load_lesson()
 
-    def update_font(self):
+    def update_font(self) -> None:
         self.lesson_text.setFontFamily(self.font_box.currentText())
         self.lesson_text.setFontPointSize(self.size_box.value())
         self.lesson_text.update()
         self.update_lesson()
 
-    def process_typing(self):
+    def process_typing(self) -> None:
         try:
-            new_char = self.input_box.text()[-1]
-            i = len(self.progress) + 1
-            if i >= len(self.lesson_text.document().toPlainText()):
+            text: str = self.lesson_text.document().toPlainText()
+            new_char: str = self.input_box.text()[-1]
+            index: int = len(self.progress)
+            next_index: int = len(self.progress) + 1
+            # Make sure letter was not removed
+            if len(self.progress) > len(self.input_box.text()):
+                return
+            # Make sure text not overflowed
+            if next_index > len(text):
                 raise IndexError()
         except IndexError:
             return
-        if (
-            self.lesson_text.document()
-            .toPlainText()
-            .find(self.progress + new_char)
-            == 0
-        ):
-            self.progress += new_char
-            self.set_underline(i)
-            self.set_underline(i - 1, False)
-        elif self.progress == self.lesson_text.document().toPlainText():
-            self.set_underline(i, False)
+
+        # If text is finished
+        if (self.progress + new_char)[: len(text)] == text:
+            self.set_underline(index, False)
+            self.finished_lesson()
+            # TODO: move lesson incrementing to self.finished_lesson()
             self.lesson_box.setValue(self.lesson_box.value() + 1)
+        # If correctly typed the character
+        elif not text.find(self.progress + new_char):
+            self.progress += new_char
+            self.set_underline(index, False)
+            self.set_underline(next_index)
+        # If The character is incorrect
         else:
-            self.set_underline(i - 1, fcolor1="red")
+            self.set_underline(index, fcolor1="red")
+
+    def finished_lesson(self) -> None:  # pylint: disable=no-self-use
+        # HACK: remove pylint disable
+        # TODO: Add typing stats (Issue #3)
+        msg: QMessageBox = QMessageBox()
+        msg.setWindowTitle("You finished the lesson.")
+        msg.setText("You finished the lesson successfully.")
+        msg.setInformativeText("Stats are not available in this version.")
+        msg.setStandardButtons(QMessageBox.StandardButton.Close)
+        msg.setIcon(QMessageBox.Icon.Information)
+        msg.exec()
 
     def set_underline(
         self,
@@ -98,7 +117,7 @@ class TypingWindow(QDialog):
         bcolor1="yellow",
         fcolor2="green",
         bcolor2="transparent",
-    ):
+    ) -> None:
         try:
             self.cursor.setPosition(i)
             self.cursor.setPosition(i + 1, QTextCursor.MoveMode.KeepAnchor)
@@ -121,13 +140,13 @@ class TypingWindow(QDialog):
         self.hide()
         sys.exit(0)
 
-    def update_lesson(self):
+    def update_lesson(self) -> None:
         self.input_box.setText("")
         self.progress = ""
         self.load_lesson()
 
-    def load_lesson(self):
-        t = load_lesson_text(self.lesson_box.text(), self.mode)
+    def load_lesson(self) -> None:
+        t: str | None = load_lesson_text(self.lesson_box.text(), self.mode)
         if t is None:
             self.lesson_text.setText(
                 "This lesson does not exist. "
