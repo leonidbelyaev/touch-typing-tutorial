@@ -5,13 +5,16 @@ from typing import NoReturn
 from PyQt6.QtGui import QBrush, QColor, QFont
 from PyQt6.QtGui import QTextCharFormat as QTextCharFmt
 from PyQt6.QtGui import QTextCursor
-from PyQt6.QtWidgets import QDialog, QMessageBox
+from PyQt6.QtWidgets import (
+    QApplication,
+    QDialog,
+    QMessageBox,
+    QTextEdit,
+)
 
 from src.design.typing import Ui_Dialog
 from src.index import MODE_NAMES
 from src.mode import Mode
-
-# Adding Roboto Mono
 
 
 def load_lesson_text(i, mode: Mode) -> str | None:
@@ -33,11 +36,11 @@ def load_lesson_text(i, mode: Mode) -> str | None:
 
 
 def get_ways(lst: list) -> list:
-    ways = []
+    ways: list = []
     if len(lst) == 1:
         return lst[0]
     for i in lst:
-        ls2 = lst.copy()
+        ls2: list = lst.copy()
         del ls2[ls2.index(i)]
         for way in get_ways(ls2):
             ways.append([i, *way])
@@ -45,9 +48,10 @@ def get_ways(lst: list) -> list:
 
 
 class TypingWindow(QDialog, Ui_Dialog):
-    def __init__(self, mode: Mode) -> None:
+    def __init__(self, app: QApplication, mode: Mode) -> None:
         super().__init__()
         self.setupUi(self)
+        self.app: QApplication = app
         self.mode: Mode = mode
         self.setWindowTitle(f"{MODE_NAMES[mode.type]} — Touch Typing Tutorial")
         self.lesson_text.setFontFamily("Roboto Mono")
@@ -58,17 +62,51 @@ class TypingWindow(QDialog, Ui_Dialog):
         self.back_to_menu_btn.clicked.connect(self.close)
         self.quit_btn.clicked.connect(self.exit)
         self.lesson_box.valueChanged.connect(self.update_lesson)
-        self.font_box.currentTextChanged.connect(self.update_font)
-        self.size_box.valueChanged.connect(self.update_font)
         self.input_box.textChanged.connect(self.process_typing)
+        self.apply_btn.clicked.connect(self.update_font)
+        self.lesson_text.focusInEvent = lambda e: (
+            self.input_box.setFocus()
+            and QTextEdit.focusOutEvent(self.lesson_text, e)
+        )
+
+        # Set "Apply" button state triggers
+        self.font_box.currentTextChanged.connect(
+            lambda: self.apply_btn.setEnabled(True)
+        )
+        self.size_box.valueChanged.connect(
+            lambda: self.apply_btn.setEnabled(True)
+        )
         # Start Typing
         self.load_lesson()
 
     def update_font(self) -> None:
-        self.lesson_text.setFontFamily(self.font_box.currentText())
-        self.lesson_text.setFontPointSize(self.size_box.value())
-        self.lesson_text.update()
-        self.update_lesson()
+        # Ask for confirmation
+        msg: QMessageBox = QMessageBox()
+        msg.setWindowTitle("Are you sure you want to continue?")
+        msg.setText("Are you sure you want to continue?")
+        msg.setInformativeText("Some progress might be lost.")
+        msg.setStandardButtons(
+            QMessageBox.StandardButton.Cancel | QMessageBox.StandardButton.Yes
+        )
+        msg.setDefaultButton(QMessageBox.StandardButton.Cancel)
+        msg.setIcon(QMessageBox.Icon.Question)
+        if msg.exec() == QMessageBox.StandardButton.Cancel:
+            self.font_box.setEditText(self.lesson_text.fontFamily())
+            self.size_box.setValue(int(self.lesson_text.fontPointSize()))
+        else:
+            # Apply the changes
+            self.lesson_text.setFontFamily(self.font_box.currentText())
+            self.lesson_text.setFontPointSize(self.size_box.value())
+            self.lesson_text.setText(self.lesson_text.toPlainText())
+            # Recolor all previous letters
+            i: int = 0
+            for i in range(len(self.progress)):
+                self.set_underline(i, False)
+            self.set_underline(i + 1)  # Set the current cursor
+            self.app.processEvents()
+            self.lesson_text.update()
+        self.input_box.setFocus()
+        self.apply_btn.setEnabled(False)
 
     def process_typing(self) -> None:
         try:

@@ -83,7 +83,7 @@ class MyWidget(QMainWindow, Ui_MainWindow):
 
     def start_typing(self, mode: Mode) -> None:
         self.hide()
-        TypingWindow(mode).exec()
+        TypingWindow(app, mode).exec()
         self.show()
 
 
