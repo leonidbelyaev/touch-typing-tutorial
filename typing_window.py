@@ -217,9 +217,14 @@ class TypingWindow(QDialog, Ui_Dialog):
             )
             return
         if mode.type == "course":
-            if len(lesson) < 5:
-                lesson *= 2
-            lst: list[str] = get_ways(list(lesson))
+            lesson *= 2 if len(lesson) < 5 else 1  # Make sure not too short
+            if len(lesson) > 7:
+                lst: list[str] = [
+                    "".join(random.sample(lesson, 6)) for _ in range(40)
+                ]
+            else:
+                lst: list[str] = get_ways(list(lesson))
+                random.shuffle(lst)
             if len(lst) < 40:
                 lst: list[str] = (lst * (40 // len(lst)))[:41]
             else:
