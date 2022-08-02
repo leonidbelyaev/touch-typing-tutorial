@@ -9,3 +9,12 @@ lessons
 └── words
     └── en-US.txt
 
+Do not forget to include all languages and layouts to index.py file.
+
+By default, INDEX in index.py looks like this:
+INDEX: dict[str, list[str]] = {
+    "languages": ["en-US"],
+    "layouts": ["qwerty"],
+}
+To add new language or layout, add a comma and type it's name in either
+quotes ('') or double quotes ("").

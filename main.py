@@ -28,16 +28,17 @@ def load_fonts() -> None:
                 continue
 
 
-class MyWidget(QMainWindow, Ui_MainWindow):
+class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self) -> None:
         super().__init__()
         self.setupUi(self)
-        self.load_options()
+        self.load_options()  # Load languages and layouts
         self.connect()  # Connections
 
         load_fonts()  # Keep at the end: might take a long time
 
     def connect(self) -> None:
+        # Connections
         self.course_btn.clicked.connect(self.start_course)
         self.random_btn.clicked.connect(self.start_random)
         self.words_btn.clicked.connect(self.start_words)
@@ -93,7 +94,7 @@ def except_hook(cls, exception, traceback) -> None:
 
 if __name__ == "__main__":
     app: QApplication = QApplication(sys.argv)
-    ex: MyWidget = MyWidget()
+    ex: MainWindow = MainWindow()
     ex.show()
     sys.excepthook = except_hook
     sys.exit(app.exec())

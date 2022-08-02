@@ -58,6 +58,11 @@ class TypingWindow(QDialog, Ui_Dialog):
         self.lesson_text.setFontPointSize(16)
         self.progress: str = ""
         self.cursor: QTextCursor = self.lesson_text.textCursor()
+        self.connect()  # Connections
+        # Start Typing
+        self.load_lesson()
+
+    def connect(self) -> None:
         # Connections
         self.back_to_menu_btn.clicked.connect(self.close)
         self.quit_btn.clicked.connect(self.exit)
@@ -68,7 +73,6 @@ class TypingWindow(QDialog, Ui_Dialog):
             self.input_box.setFocus()
             and QTextEdit.focusOutEvent(self.lesson_text, e)
         )
-
         # Set "Apply" button state triggers
         self.font_box.currentTextChanged.connect(
             lambda: self.apply_btn.setEnabled(True)
@@ -76,8 +80,6 @@ class TypingWindow(QDialog, Ui_Dialog):
         self.size_box.valueChanged.connect(
             lambda: self.apply_btn.setEnabled(True)
         )
-        # Start Typing
-        self.load_lesson()
 
     def update_font(self) -> None:
         # Ask for confirmation
@@ -88,8 +90,8 @@ class TypingWindow(QDialog, Ui_Dialog):
         msg.setStandardButtons(
             QMessageBox.StandardButton.Cancel | QMessageBox.StandardButton.Yes
         )
-        msg.setDefaultButton(QMessageBox.StandardButton.Cancel)
-        msg.setIcon(QMessageBox.Icon.Question)
+        msg.setDefaultButton(QMessageBox.StandardButton.Yes)
+        msg.setIcon(QMessageBox.Icon.Warning)
         if msg.exec() == QMessageBox.StandardButton.Cancel:
             self.font_box.setEditText(self.lesson_text.fontFamily())
             self.size_box.setValue(int(self.lesson_text.fontPointSize()))
