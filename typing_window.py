@@ -5,6 +5,7 @@ from typing import NoReturn
 from PyQt6.QtGui import QBrush, QColor, QFont
 from PyQt6.QtGui import QTextCharFormat as QTextCharFmt
 from PyQt6.QtGui import QTextCursor
+from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import (
     QApplication,
     QDialog,
@@ -16,6 +17,40 @@ from src.design.typing import Ui_Dialog
 from src.index import MODE_NAMES
 from src.mode import Mode
 
+# enum charcode {
+#   NOOP,      00000
+#   E,         00001
+#   T,         00010
+#   N,         00011
+#   A,         00100
+#   S,         00101
+#   H,         00110
+#   F,         00111
+#   O,         01000
+#   R,         01001
+#   D,         01010
+#   G,         01011
+#   L,         01100
+#   Y,         01101
+#   P,         01110
+#   Z,         01111
+#   I,         10000
+#   C,         10001
+#   U,         10010
+#   B,         10011
+#   M,         10100
+#   V,         10101
+#   K,         10110
+#   COLON,     10111
+#   W,         11000
+#   J,         11001
+#   X,         11010
+#   ESCAPE,    11011
+#   Q,         11100
+#   ENTER,     11101
+#   SPACE,     11110
+#   BACKSPACE, 11111
+# };
 
 def load_lesson_text(i, mode: Mode) -> str | None:
     filename: str = "src/lessons/"

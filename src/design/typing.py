@@ -20,9 +20,12 @@ class Ui_Dialog(object):
         self.gridLayout.setObjectName("gridLayout")
         self.horizontalLayout = QtWidgets.QHBoxLayout()
         self.horizontalLayout.setObjectName("horizontalLayout")
+
         self.input_box = QtWidgets.QLineEdit(Dialog)
         self.input_box.setObjectName("input_box")
         self.horizontalLayout.addWidget(self.input_box)
+
+
         self.font_box = QtWidgets.QFontComboBox(Dialog)
         self.font_box.setObjectName("font_box")
         self.horizontalLayout.addWidget(self.font_box)
@@ -35,6 +38,12 @@ class Ui_Dialog(object):
         self.apply_btn.setEnabled(False)
         self.apply_btn.setObjectName("apply_btn")
         self.horizontalLayout.addWidget(self.apply_btn)
+
+        self.glove_box_label = QtWidgets.QLabel(Dialog)
+        self.glove_box = QtGui.QPixmap('img/00000.png')
+        self.glove_box_label.setPixmap(self.glove_box)
+        self.horizontalLayout.addWidget(self.glove_box_label)
+
         self.gridLayout.addLayout(self.horizontalLayout, 1, 0, 1, 1)
         self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_2.setObjectName("horizontalLayout_2")
